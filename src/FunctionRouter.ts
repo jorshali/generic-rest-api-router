@@ -3,8 +3,10 @@ import { FunctionRoute } from './FunctionRoute';
 import { RequestContext } from './RequestContext';
 import { ApiError } from './ApiError';
 import { Handler } from './Handler';
+import { FunctionResponse } from './FunctionResponse';
 
 type FunctionRouterOptions = {
+    basePath?: string;
     includeCORS?: boolean;
 };
 
@@ -12,31 +14,31 @@ export class FunctionRouter<T, U extends RequestContext> {
     private routes: FunctionRoute<T, U>[];
     private customRoutes: FunctionRoute<T, U>[];
 
-    constructor(private basePath: string, private options: FunctionRouterOptions = {}) {
+    constructor(private options: FunctionRouterOptions = {}) {
         this.routes = [];
         this.customRoutes = [];
     }
 
     get(path: string, handler: Handler<T, U>) {
-        this.routes.push(new FunctionRoute<T, U>('GET', path, handler));
+        this.routes.push(new FunctionRoute<T, U>('GET', this.calculateFullPath(path), handler));
 
         return this;
     }
 
     post(path: string, handler: Handler<T, U>) {
-        this.routes.push(new FunctionRoute<T, U>('POST', path, handler));
+        this.routes.push(new FunctionRoute<T, U>('POST', this.calculateFullPath(path), handler));
 
         return this;
     }
 
     put(path: string, handler: Handler<T, U>) {
-        this.routes.push(new FunctionRoute<T, U>('PUT', path, handler));
+        this.routes.push(new FunctionRoute<T, U>('PUT', this.calculateFullPath(path), handler));
 
         return this;
     }
 
     delete(path: string, handler: Handler<T, U>) {
-        this.routes.push(new FunctionRoute<T, U>('DELETE', path, handler));
+        this.routes.push(new FunctionRoute<T, U>('DELETE', this.calculateFullPath(path), handler));
 
         return this;
     }
@@ -71,36 +73,42 @@ export class FunctionRouter<T, U extends RequestContext> {
         };
     }
 
-    async handleRequest(requestContext: U) {
+    async handleRequest(requestContext: U): Promise<FunctionResponse> {
         const route = this.calculateRoute(requestContext);
+        
+        let response: FunctionResponse = {
+            statusCode: StatusCodes.FORBIDDEN,
+            body: getReasonPhrase(StatusCodes.FORBIDDEN),
+        };
 
         if (route) {
-            let response = route.okResponse();
-
             try {
                 response = await route.handle(requestContext);
             } catch (e) {
                 if (e instanceof ApiError) {
                     console.error(e);
-                    return this.errorResponse((e as ApiError).statusCode);
+                    response = this.errorResponse((e as ApiError).statusCode);
                 }
 
                 console.error(e);
-                return this.errorResponse(StatusCodes.BAD_REQUEST);
+                response = this.errorResponse(StatusCodes.BAD_REQUEST);
             }
-
-            if (this.options.includeCORS) {
-                response.headers = response.headers || {};
-                response.headers['Content-Type'] = 'application/json';
-                response.headers['Access-Control-Allow-Origin'] = '*';
-            }
-
-            return response;
         }
 
-        return {
-            statusCode: StatusCodes.FORBIDDEN,
-            body: getReasonPhrase(StatusCodes.FORBIDDEN),
-        };
+        if (this.options.includeCORS) {
+            response.headers = response.headers || {};
+            response.headers['Content-Type'] = 'application/json';
+            response.headers['Access-Control-Allow-Origin'] = '*';
+        }
+
+        return response;
+    }
+
+    private calculateFullPath(path: string) {
+        if (this.options.basePath) {
+            return `${this.options.basePath}${path}`;
+        }
+
+        return path;
     }
 }

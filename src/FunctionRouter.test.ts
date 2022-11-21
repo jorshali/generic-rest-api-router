@@ -41,12 +41,14 @@ describe('Crud router module', () => {
     const deleteHandler = jest.fn<Handler<Post, TestRequestContext>>();
 
     beforeEach(() => {
-        router = new FunctionRouter<Post, TestRequestContext>('')
-            .post('/posts', createHandler)
-            .get('/posts', findHandler)
-            .get('/posts/:id', findByIdHandler)
-            .put('/posts/:id', updateHandler)
-            .delete('/posts/:id', deleteHandler);
+        router = new FunctionRouter<Post, TestRequestContext>({
+            basePath: '/posts'
+        })
+            .post('', createHandler)
+            .get('', findHandler)
+            .get('/:id', findByIdHandler)
+            .put('/:id', updateHandler)
+            .delete('/:id', deleteHandler);
     });
 
     test('handles create', async () => {
@@ -100,7 +102,7 @@ describe('Crud router module', () => {
     });
 
     test('route handling with path param', async () => {
-        await router.get('/posts/:id/custom', async (route, requestContext) => {
+        await router.get('/:id/custom', async (route, requestContext) => {
             const pathParams = route.getPathParams(requestContext);
 
             expect(pathParams.id).toBe('22');
@@ -123,7 +125,7 @@ describe('Crud router module', () => {
     });
 
     test('route handling with JSON body processing', async () => {
-        await router.post('/posts/:id/custom', async (route, requestContext) => {
+        await router.post('/:id/custom', async (route, requestContext) => {
             const post = route.parseBody(requestContext);
 
             expect(post).toStrictEqual({
