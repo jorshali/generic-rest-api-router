@@ -3,7 +3,7 @@ import * as Path from 'node-match-path';
 
 import { ApiError } from './ApiError';
 import { Handler } from './Handler';
-import { FunctionResponse } from './Response';
+import { FunctionResponse } from './FunctionResponse';
 import { RequestContext } from './RequestContext';
 
 export class FunctionRoute<T, U extends RequestContext> {

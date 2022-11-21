@@ -1,5 +1,5 @@
 import { FunctionRoute } from './FunctionRoute';
-import { FunctionResponse } from './Response';
+import { FunctionResponse } from './FunctionResponse';
 import { RequestContext } from './RequestContext';
 
 export type Handler<T, U extends RequestContext> = (

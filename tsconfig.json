@@ -1,23 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "strict": true,
-    "preserveConstEnums": true,
-    "noEmit": true,
-    "sourceMap": false,
-    "module":"es2015",
-    "moduleResolution":"node",
-    "esModuleInterop": true, 
+    "outDir": "./dist",
+    "target": "es5",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "removeComments": true,
+    "declaration": true,
+    "sourceMap": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "strictPropertyInitialization": false
+    "jsx": "react"
   },
-  "exclude": ["node_modules", "**/*.test.ts"],
-  "typeRoots": [
-    "./node_modules/@types"
+  "include": [
+    "./src/**/*.ts"
   ],
-  "types": [
-    "node",
-    "jest"
+  "exclude": [
+    "node_modules"
   ]
 }
