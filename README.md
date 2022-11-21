@@ -1,11 +1,11 @@
 
-# aws-rest-api-starter-kit
+# simple-rest-api-router
 
-Developing a serverless CRUD-based API has never been easier!  This TypeScript library provides the basic routing necessary for your standard CRUD operations.  You simply decide what operations you want to support and provide the repository logic.
+A simple REST API router for use with serverless functions.
 
 ## Installation
 
-* `npm i aws-rest-api-starter-kit`
+* `npm i simple-rest-api-router`
 
 ## Basic usage
 
