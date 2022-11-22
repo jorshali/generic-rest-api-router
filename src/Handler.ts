@@ -4,5 +4,5 @@ import { RequestContext } from './RequestContext';
 
 export type Handler<T, U extends RequestContext> = (
     route: FunctionRoute<T, U>,
-    requestContext: U,
+    requestContext: U
 ) => Promise<FunctionResponse>;

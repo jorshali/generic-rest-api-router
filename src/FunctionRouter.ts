@@ -11,12 +11,12 @@ type FunctionRouterOptions = {
 };
 
 export class FunctionRouter<T, U extends RequestContext> {
+    private options: FunctionRouterOptions;
     private routes: FunctionRoute<T, U>[];
-    private customRoutes: FunctionRoute<T, U>[];
 
-    constructor(private options: FunctionRouterOptions = {}) {
+    constructor(options?: FunctionRouterOptions) {
         this.routes = [];
-        this.customRoutes = [];
+        this.options = options || {};
     }
 
     get(path: string, handler: Handler<T, U>) {
@@ -44,16 +44,6 @@ export class FunctionRouter<T, U extends RequestContext> {
     }
 
     calculateRoute(requestContext: U) {
-        if (this.customRoutes.length > 0) {
-            const customRoute = this.customRoutes.find((route) => {
-                return route.isMatch(requestContext);
-            });
-
-            if (customRoute) {
-                return customRoute;
-            }
-        }
-
         return this.routes.find((route) => {
             return route.isMatch(requestContext);
         });
@@ -75,31 +65,23 @@ export class FunctionRouter<T, U extends RequestContext> {
 
     async handleRequest(requestContext: U): Promise<FunctionResponse> {
         const route = this.calculateRoute(requestContext);
-        
+
         let response: FunctionResponse = {
             statusCode: StatusCodes.FORBIDDEN,
-            body: getReasonPhrase(StatusCodes.FORBIDDEN),
+            body: getReasonPhrase(StatusCodes.FORBIDDEN)
         };
 
         if (route) {
-            try {
-                response = await route.handle(requestContext);
-            } catch (e) {
-                if (e instanceof ApiError) {
-                    console.error(e);
-                    response = this.errorResponse((e as ApiError).statusCode);
-                }
-
-                console.error(e);
-                response = this.errorResponse(StatusCodes.BAD_REQUEST);
-            }
+            response = await route.handle(requestContext);
         }
+
+        response.headers = response.headers || {};
 
         if (this.options.includeCORS) {
-            response.headers = response.headers || {};
-            response.headers['Content-Type'] = 'application/json';
             response.headers['Access-Control-Allow-Origin'] = '*';
         }
+
+        response.headers['Content-Type'] = 'application/json';
 
         return response;
     }

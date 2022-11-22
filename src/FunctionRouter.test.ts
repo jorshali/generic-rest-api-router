@@ -121,6 +121,9 @@ describe('Crud router module', () => {
         expect(result).toStrictEqual({
             statusCode: 200,
             body: JSON.stringify(post),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
     });
 
@@ -156,6 +159,35 @@ describe('Crud router module', () => {
         expect(result).toStrictEqual({
             statusCode: 200,
             body: JSON.stringify(post),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    });
+
+    test('route handling with CORS response', async () => {
+        router = new FunctionRouter<Post, TestRequestContext>({
+            basePath: '/posts',
+            includeCORS: true
+        }).get('', async (route, requestContext) => {
+            return route.okResponse([post]);
+        });
+
+        const result = await router.handleRequest(
+            new TestRequestContext(
+                'GET',
+                '/posts',
+                '',
+            ),
+        );
+
+        expect(result).toStrictEqual({
+            statusCode: 200,
+            body: `[${JSON.stringify(post)}]`,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     });
 });

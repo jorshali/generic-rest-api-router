@@ -54,11 +54,13 @@ export class FunctionRoute<T, U extends RequestContext> {
 
     async handle(requestContext: U): Promise<FunctionResponse> {
         try {
-            const result = await this.handler(this, requestContext);
-
-            return result;
+            return await this.handler(this, requestContext) || this.okResponse();
         } catch (e) {
             console.error(e);
+            
+            if (e instanceof ApiError) {
+                return this.errorResponse((e as ApiError).statusCode);
+            }
 
             return this.errorResponse(StatusCodes.INTERNAL_SERVER_ERROR);
         }
