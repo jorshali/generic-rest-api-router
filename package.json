@@ -1,6 +1,6 @@
 {
   "name": "simple-rest-api-router",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "main": "./dist/index.js",
   "repository": "https://github.com/jorshali/aws-rest-api-starter-kit",
   "homepage": "https://github.com/jorshali/aws-rest-api-starter-kit",
