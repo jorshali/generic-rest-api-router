@@ -1,7 +1,7 @@
 
 # generic-rest-api-router
 
-A simple REST API router for use with serverless functions.
+A simple, generic REST API router for use with serverless functions.
 
 ## Installation
 
