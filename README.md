@@ -1,15 +1,15 @@
 
-# simple-rest-api-router
+# generic-rest-api-router
 
 A simple REST API router for use with serverless functions.
 
 ## Installation
 
-* `npm i simple-rest-api-router`
+* `npm i generic-rest-api-router`
 
 ## Basic usage
 
-This project is only intended to be a base to be extended for a specific environment.  In order to apply the `simple-rest-api-router` to an environment, you need to implement the `RequestContext` interface.
+This project is only intended to be a base to be extended for a specific environment.  In order to apply the `generic-rest-api-router` to an environment, you need to implement the `RequestContext` interface.
 
 For example, for usage within AWS Lambda, you could define the following `AWSRequestContext`:
 

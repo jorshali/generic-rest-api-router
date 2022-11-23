@@ -1,9 +1,9 @@
 {
-  "name": "simple-rest-api-router",
+  "name": "generic-rest-api-router",
   "version": "1.0.0",
   "main": "./dist/index.js",
-  "repository": "https://github.com/jorshali/aws-rest-api-starter-kit",
-  "homepage": "https://github.com/jorshali/aws-rest-api-starter-kit",
+  "repository": "https://github.com/jorshali/generic-rest-api-router",
+  "homepage": "https://github.com/jorshali/generic-rest-api-router",
   "author": "Jacob Orshalick",
   "license": "MIT",
   "keywords": [
@@ -14,8 +14,9 @@
     "serverless"
   ],
   "bugs": {
-    "url": "https://github.com/jorshali/aws-rest-api-starter-kit/issues"
+    "url": "https://github.com/jorshali/generic-rest-api-router/issues"
   },
+  "files": ["package.json", "package-lock.json", "LICENSE", "README.md", "tsconfig.json", "dist"],
   "scripts": {
     "clean": "rm -rf ./dist",
     "prebuild": "npm run clean",
