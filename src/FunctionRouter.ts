@@ -1,7 +1,6 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import { FunctionRoute } from './FunctionRoute';
 import { RequestContext } from './RequestContext';
-import { ApiError } from './ApiError';
 import { Handler } from './Handler';
 import { FunctionResponse } from './FunctionResponse';
 
@@ -10,6 +9,9 @@ type FunctionRouterOptions = {
     includeCORS?: boolean;
 };
 
+/**
+ * Defines a REST API and the functions that will be invoked for all matching HTTP methods and paths.
+ */
 export class FunctionRouter<T, U extends RequestContext> {
     private options: FunctionRouterOptions;
     private routes: FunctionRoute<T, U>[];
@@ -19,50 +21,69 @@ export class FunctionRouter<T, U extends RequestContext> {
         this.options = options || {};
     }
 
+    /**
+     * Specifies a handler that should be called when an HTTP GET method request is made with 
+     * the provided path.
+     * 
+     * @param path a URI path
+     * @param handler a function to be called when a GET request with the matching path is made
+     * @returns this FunctionRouter instance
+     */
     get(path: string, handler: Handler<T, U>) {
         this.routes.push(new FunctionRoute<T, U>('GET', this.calculateFullPath(path), handler));
 
         return this;
     }
 
+    /**
+     * Specifies a handler that should be called when an HTTP POST method request is made with 
+     * the provided path.
+     * 
+     * @param path a URI path
+     * @param handler a function to be called when a POST request with the matching path is made
+     * @returns this FunctionRouter instance
+     */
     post(path: string, handler: Handler<T, U>) {
         this.routes.push(new FunctionRoute<T, U>('POST', this.calculateFullPath(path), handler));
 
         return this;
     }
 
+    /**
+     * Specifies a handler that should be called when an HTTP PUT method request is made with 
+     * the provided path.
+     * 
+     * @param path a URI path
+     * @param handler a function to be called when a PUT request with the matching path is made
+     * @returns this FunctionRouter instance
+     */
     put(path: string, handler: Handler<T, U>) {
         this.routes.push(new FunctionRoute<T, U>('PUT', this.calculateFullPath(path), handler));
 
         return this;
     }
 
+    /**
+     * Specifies a handler that should be called when an HTTP DELETE method request is made with 
+     * the provided path.
+     * 
+     * @param path a URI path
+     * @param handler a function to be called when a DELETE request with the matching path is made
+     * @returns this FunctionRouter instance
+     */
     delete(path: string, handler: Handler<T, U>) {
         this.routes.push(new FunctionRoute<T, U>('DELETE', this.calculateFullPath(path), handler));
 
         return this;
     }
 
-    calculateRoute(requestContext: U) {
-        return this.routes.find((route) => {
-            return route.isMatch(requestContext);
-        });
-    }
-
-    okResponse(result: T) {
-        return {
-            statusCode: StatusCodes.OK,
-            body: JSON.stringify(result),
-        };
-    }
-
-    errorResponse(statusCode: StatusCodes) {
-        return {
-            statusCode,
-            body: getReasonPhrase(statusCode),
-        };
-    }
-
+    /**
+     * Calls the appropriate Handler based on the HTTP method and path found in the
+     * requestContext.  Returns the result of the handler execution.
+     * 
+     * @param requestContext 
+     * @returns handler result
+     */
     async handleRequest(requestContext: U): Promise<FunctionResponse> {
         const route = this.calculateRoute(requestContext);
 
@@ -92,5 +113,11 @@ export class FunctionRouter<T, U extends RequestContext> {
         }
 
         return path;
+    }
+
+    private calculateRoute(requestContext: U) {
+        return this.routes.find((route) => {
+            return route.isMatch(requestContext);
+        });
     }
 }
