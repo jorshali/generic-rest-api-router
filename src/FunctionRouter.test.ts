@@ -42,7 +42,7 @@ describe('Crud router module', () => {
 
     beforeEach(() => {
         router = new FunctionRouter<Post, TestRequestContext>({
-            basePath: '/posts'
+            resourcePath: '/posts',
         })
             .post('', createHandler)
             .get('', findHandler)
@@ -122,8 +122,8 @@ describe('Crud router module', () => {
             statusCode: 200,
             body: JSON.stringify(post),
             headers: {
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+            },
         });
     });
 
@@ -160,34 +160,28 @@ describe('Crud router module', () => {
             statusCode: 200,
             body: JSON.stringify(post),
             headers: {
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+            },
         });
     });
 
     test('route handling with CORS response', async () => {
         router = new FunctionRouter<Post, TestRequestContext>({
-            basePath: '/posts',
-            includeCORS: true
+            resourcePath: '/posts',
+            includeCORS: true,
         }).get('', async (route, requestContext) => {
             return route.okResponse([post]);
         });
 
-        const result = await router.handleRequest(
-            new TestRequestContext(
-                'GET',
-                '/posts',
-                '',
-            ),
-        );
+        const result = await router.handleRequest(new TestRequestContext('GET', '/posts', ''));
 
         expect(result).toStrictEqual({
             statusCode: 200,
             body: `[${JSON.stringify(post)}]`,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+                'Access-Control-Allow-Origin': '*',
+            },
         });
     });
 });

@@ -11,56 +11,61 @@ import { RequestContext } from './RequestContext';
  * a handler to be called when a request matches the route.  To support REST
  * requests, a route can contain path parameters.  The following examples are
  * routes with and without path parameters:
- * 
+ *
  *   new FunctionRoute('GET', '/posts/:id', handler)
  *   new FunctionRoute('GET', '/posts', handler)
  *   new FunctionRoute('POST', '/posts', handler)
  *   new FunctionRoute('PUT', '/posts/:id', handler)
  *   new FunctionRoute('GET', '/posts/slug/:slug', handler)
- * 
+ *
  */
 export class FunctionRoute<T, U extends RequestContext> {
     constructor(
         private httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE',
-        private path: string,
+        private resourcePath: string,
+        private routePath: string,
         private handler: Handler<T, U>,
     ) {}
 
     /**
      * Determines whether the provided requestContext matches the HTTP method and
      * path associated with this route.
-     * 
+     *
      * @param requestContext
      * @returns boolean indicating whether the route is a match
      */
     isMatch(requestContext: U) {
+        const uriPath = this.calculateUriOnlyPath(requestContext);
+
         return (
             this.httpMethod.toUpperCase() === requestContext.getHttpMethod().toUpperCase() &&
-            Path.match(this.path, requestContext.getPath()).matches
+            Path.match(this.getFullRoutePath(), uriPath).matches
         );
     }
 
     /**
      * Returns the path parameters for the provided RequestContext.  For the path definition:  /posts/:id,
      * the RequestContext path:  /posts/1, would result in the following result:
-     * 
+     *
      * { "id": "1" }
-     * 
+     *
      * All param values are strings and must be coerced to specific types.
-     * 
-     * @param requestContext 
+     *
+     * @param requestContext
      * @returns an object representing the path parameters
      */
     getPathParams(requestContext: U) {
-        return Path.match(this.path, requestContext.getPath()).params || {};
+        const uriPath = this.calculateUriOnlyPath(requestContext);
+
+        return Path.match(this.getFullRoutePath(), uriPath).params || {};
     }
 
     /**
      * Parses the body of the RequestContext into an object from a JSON string.  If the body
-     * is not valid JSON, the method will throw an ApiError resulting in a 400 
+     * is not valid JSON, the method will throw an ApiError resulting in a 400
      * response.
-     * 
-     * @param requestContext 
+     *
+     * @param requestContext
      * @returns an object representation of the JSON body
      */
     parseBody(requestContext: U): T {
@@ -78,10 +83,10 @@ export class FunctionRoute<T, U extends RequestContext> {
     }
 
     /**
-     * Creates a FunctionResponse object for a 200 OK response.  if a result is provided it is 
+     * Creates a FunctionResponse object for a 200 OK response.  if a result is provided it is
      * stringified into the body of the response.
-     * 
-     * @param result 
+     *
+     * @param result
      * @returns a 200 OK FunctionResponse instance with the result as the JSON body
      */
     okResponse(result?: T | T[]): FunctionResponse {
@@ -94,8 +99,8 @@ export class FunctionRoute<T, U extends RequestContext> {
     /**
      * Creates a FunctionResponse object for the provided statusCode.  The standard
      * reason phrase for the statusCode is sent as the body of the response.
-     * 
-     * @param statusCode 
+     *
+     * @param statusCode
      * @returns a FunctionResponse for the provided statusCode
      */
     errorResponse(statusCode: StatusCodes): FunctionResponse {
@@ -108,21 +113,32 @@ export class FunctionRoute<T, U extends RequestContext> {
     /**
      * Calls on the handler provided to the constructor.  If the handler throws an error
      * it is logged and an error response is sent based on the appropriate HTTP status code.
-     * 
-     * @param requestContext 
+     *
+     * @param requestContext
      * @returns FunctionResponse based on the result of the handler
      */
     async handle(requestContext: U): Promise<FunctionResponse> {
         try {
-            return await this.handler(this, requestContext) || this.okResponse();
+            return (await this.handler(this, requestContext)) || this.okResponse();
         } catch (e) {
             console.error(e);
-            
+
             if (e instanceof ApiError) {
                 return this.errorResponse((e as ApiError).statusCode);
             }
 
             return this.errorResponse(StatusCodes.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private calculateUriOnlyPath(requestContext: U) {
+        const path = requestContext.getPath();
+        const uriStartingIndex = path.indexOf(this.resourcePath);
+
+        return path.slice(uriStartingIndex, path.length);
+    }
+
+    private getFullRoutePath() {
+        return `${this.resourcePath}${this.routePath}`;
     }
 }

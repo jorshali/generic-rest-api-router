@@ -1,6 +1,6 @@
 {
   "name": "generic-rest-api-router",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "main": "./dist/index.js",
   "repository": "https://github.com/jorshali/generic-rest-api-router",
   "homepage": "https://github.com/jorshali/generic-rest-api-router",

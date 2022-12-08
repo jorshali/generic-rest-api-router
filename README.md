@@ -52,7 +52,7 @@ Once these classes been defined, you can then create your routes in a Lambda fun
 
 ```
 const router = new AwsFunctionRouter({
-    basePath: '/post-service',
+    resourcePath: '/post-service',
     includeCORS: true
   })
   .get('', async (route) => {

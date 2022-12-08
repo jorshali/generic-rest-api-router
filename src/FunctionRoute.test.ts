@@ -24,21 +24,21 @@ describe('Route module', () => {
     const handler = jest.fn<Handler<Post, TestRequestContext>>();
 
     test('parses a route to get params', () => {
-        const route = new FunctionRoute('GET', '/employee/:id', handler);
+        const route = new FunctionRoute('GET', '/employee', '/:id', handler);
         const params = route.getPathParams(new TestRequestContext('GET', '/employee/22', ''));
 
         expect(params.id).toBe('22');
     });
 
     test('parses a route to get params but none found', () => {
-        const route = new FunctionRoute('GET', '/employee', handler);
+        const route = new FunctionRoute('GET', '/employee', '', handler);
         const params = route.getPathParams(new TestRequestContext('GET', '/employee/22', ''));
 
         expect(params.id).toBeFalsy();
     });
 
     test('is a match', () => {
-        const route = new FunctionRoute('POST', '/employee/:id', handler);
+        const route = new FunctionRoute('POST', '/employee', '/:id', handler);
 
         const isMatch = route.isMatch(new TestRequestContext('POST', '/employee/22', ''));
 
@@ -46,10 +46,17 @@ describe('Route module', () => {
     });
 
     test('is not a match', () => {
-        const route = new FunctionRoute('GET', '/:id', handler);
+        const route = new FunctionRoute('GET', '/', ':id', handler);
 
         const isMatch = route.isMatch(new TestRequestContext('GET', '/employee/22', ''));
 
         expect(isMatch).toBeFalsy();
+    });
+
+    test('parses a route to get params when URL is complete', () => {
+        const route = new FunctionRoute('GET', '/employee', '/:id', handler);
+        const params = route.getPathParams(new TestRequestContext('GET', 'http://localhost:8080/api/employee/22', ''));
+
+        expect(params.id).toBe('22');
     });
 });

@@ -9,7 +9,7 @@ export interface RequestContext {
      * Returns the HTTP method for the request.
      */
     getHttpMethod(): string;
-    
+
     /**
      * Returns the URI path of the request.  This may include path parameters.
      */

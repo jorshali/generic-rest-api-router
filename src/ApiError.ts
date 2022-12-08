@@ -9,7 +9,7 @@ import { getReasonPhrase } from 'http-status-codes';
 export class ApiError extends Error {
     /**
      * Create an ApiError instance with an HTTP statusCode and message.
-     * 
+     *
      * @param statusCode the HTTP status code to be sent back in the response
      * @param message (optional) the message to be included in the response body
      */
