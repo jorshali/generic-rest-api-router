@@ -46,7 +46,7 @@ describe('Route module', () => {
     });
 
     test('is not a match', () => {
-        const route = new FunctionRoute('GET', '/', ':id', handler);
+        const route = new FunctionRoute('GET', '', '/:id', handler);
 
         const isMatch = route.isMatch(new TestRequestContext('GET', '/employee/22', ''));
 

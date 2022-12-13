@@ -1,10 +1,11 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals';
+import { Mock } from 'jest-mock';
 import { FunctionRouter } from './FunctionRouter';
 import { Handler } from './Handler';
 import { Post } from './Post';
 import { RequestContext } from './RequestContext';
 
-const post: Post = {
+const defaultPost: Post = {
     postId: '1',
     slug: 'testing-1',
     createDate: 12345678,
@@ -34,13 +35,19 @@ describe('Crud router module', () => {
     const body =
         '{"postId": "1","slug": "my-first-post", "createDate": 1238381727, "title": "My First Post", "content": "This is my first post"}';
 
-    const createHandler = jest.fn<Handler<Post, TestRequestContext>>();
-    const findHandler = jest.fn<Handler<Post, TestRequestContext>>();
-    const findByIdHandler = jest.fn<Handler<Post, TestRequestContext>>();
-    const updateHandler = jest.fn<Handler<Post, TestRequestContext>>();
-    const deleteHandler = jest.fn<Handler<Post, TestRequestContext>>();
+    let createHandler: Mock<Handler<Post, TestRequestContext>>;
+    let findHandler: Mock<Handler<Post, TestRequestContext>>;
+    let findByIdHandler: Mock<Handler<Post, TestRequestContext>>;
+    let updateHandler: Mock<Handler<Post, TestRequestContext>>;
+    let deleteHandler: Mock<Handler<Post, TestRequestContext>>;
 
     beforeEach(() => {
+        createHandler = jest.fn<Handler<Post, TestRequestContext>>();
+        findHandler = jest.fn<Handler<Post, TestRequestContext>>();
+        findByIdHandler = jest.fn<Handler<Post, TestRequestContext>>();
+        updateHandler = jest.fn<Handler<Post, TestRequestContext>>();
+        deleteHandler = jest.fn<Handler<Post, TestRequestContext>>();
+
         router = new FunctionRouter<Post, TestRequestContext>({
             resourcePath: '/posts',
         })
@@ -107,7 +114,7 @@ describe('Crud router module', () => {
 
             expect(pathParams.id).toBe('22');
 
-            return route.okResponse(post);
+            return route.okResponse(defaultPost);
         });
 
         const result = await router.handleRequest(new TestRequestContext('GET', '/posts/22/custom', body));
@@ -120,7 +127,7 @@ describe('Crud router module', () => {
 
         expect(result).toStrictEqual({
             statusCode: 200,
-            body: JSON.stringify(post),
+            body: JSON.stringify(defaultPost),
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -139,7 +146,7 @@ describe('Crud router module', () => {
                 content: 'test',
             });
 
-            return route.okResponse(post);
+            return route.okResponse(defaultPost);
         });
 
         const result = await router.handleRequest(
@@ -158,7 +165,37 @@ describe('Crud router module', () => {
 
         expect(result).toStrictEqual({
             statusCode: 200,
-            body: JSON.stringify(post),
+            body: JSON.stringify(defaultPost),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    });
+
+    test('route handling with custom count', async () => {
+        router = new FunctionRouter<Post, TestRequestContext>({
+            resourcePath: '/posts',
+        })
+            .get('/count', async (route) => {
+                return route.okResponse({ count: 1 });
+            })
+            .post('', createHandler)
+            .get('', findHandler)
+            .get('/:id', findByIdHandler)
+            .put('/:id', updateHandler)
+            .delete('/:id', deleteHandler);
+
+        const result = await router.handleRequest(new TestRequestContext('GET', '/posts/count', ''));
+
+        expect(createHandler.mock.calls.length).toBe(0);
+        expect(findHandler.mock.calls.length).toBe(0);
+        expect(findByIdHandler.mock.calls.length).toBe(0);
+        expect(updateHandler.mock.calls.length).toBe(0);
+        expect(deleteHandler.mock.calls.length).toBe(0);
+
+        expect(result).toStrictEqual({
+            statusCode: 200,
+            body: '{"count":1}',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -170,18 +207,77 @@ describe('Crud router module', () => {
             resourcePath: '/posts',
             includeCORS: true,
         }).get('', async (route, requestContext) => {
-            return route.okResponse([post]);
+            return route.okResponse([defaultPost]);
         });
 
         const result = await router.handleRequest(new TestRequestContext('GET', '/posts', ''));
 
         expect(result).toStrictEqual({
             statusCode: 200,
-            body: `[${JSON.stringify(post)}]`,
+            body: `[${JSON.stringify(defaultPost)}]`,
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
             },
         });
+    });
+
+    test('handles create with no resourcePath', async () => {
+        router = new FunctionRouter<Post, TestRequestContext>()
+            .post('', createHandler)
+            .get('', findHandler)
+            .get('/:id', findByIdHandler)
+            .put('/:id', updateHandler)
+            .delete('/:id', deleteHandler);
+
+        await router.handleRequest(new TestRequestContext('POST', '/', body));
+
+        expect(createHandler.mock.calls.length).toBe(1);
+        expect(findHandler.mock.calls.length).toBe(0);
+        expect(findByIdHandler.mock.calls.length).toBe(0);
+        expect(updateHandler.mock.calls.length).toBe(0);
+        expect(deleteHandler.mock.calls.length).toBe(0);
+    });
+
+    test('handles create with no resourcePath and trailing slashes', async () => {
+        router = new FunctionRouter<Post, TestRequestContext>()
+            .post('/', createHandler)
+            .get('/', findHandler)
+            .get('/:id/', findByIdHandler)
+            .put('/:id/', updateHandler)
+            .delete('/:id/', deleteHandler);
+
+        await router.handleRequest(new TestRequestContext('POST', '/', body));
+
+        expect(createHandler.mock.calls.length).toBe(1);
+        expect(findHandler.mock.calls.length).toBe(0);
+        expect(findByIdHandler.mock.calls.length).toBe(0);
+        expect(updateHandler.mock.calls.length).toBe(0);
+        expect(deleteHandler.mock.calls.length).toBe(0);
+    });
+
+    test('handles create with no resourcePath and trailing slash on id', async () => {
+        router = new FunctionRouter<Post, TestRequestContext>()
+            .post('/', createHandler)
+            .get('/', findHandler)
+            .get('/:id/', findByIdHandler)
+            .put('/:id/', updateHandler)
+            .delete('/:id/', deleteHandler);
+
+        await router.handleRequest(new TestRequestContext('PUT', '/22', body));
+
+        expect(createHandler.mock.calls.length).toBe(0);
+        expect(findHandler.mock.calls.length).toBe(0);
+        expect(findByIdHandler.mock.calls.length).toBe(0);
+        expect(updateHandler.mock.calls.length).toBe(1);
+        expect(deleteHandler.mock.calls.length).toBe(0);
+    });
+
+    test('throws error on create with resourcePath as slash', async () => {
+        expect(() =>
+            new FunctionRouter<Post, TestRequestContext>({
+                resourcePath: '/',
+            }).post('/', createHandler),
+        ).toThrowError();
     });
 });

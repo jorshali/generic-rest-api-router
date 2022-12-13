@@ -3,10 +3,12 @@ import { FunctionRoute } from './FunctionRoute';
 import { RequestContext } from './RequestContext';
 import { Handler } from './Handler';
 import { FunctionResponse } from './FunctionResponse';
+import { ApiError } from './ApiError';
 
-type FunctionRouterOptions = {
-    resourcePath: string;
+type FunctionRouterOptions<T, U extends RequestContext> = {
+    resourcePath?: string;
     includeCORS?: boolean;
+    customErrorHandler?: (route: FunctionRoute<T, U>, e: Error) => FunctionResponse;
 };
 
 /**
@@ -15,7 +17,7 @@ type FunctionRouterOptions = {
 export class FunctionRouter<T, U extends RequestContext> {
     private routes: FunctionRoute<T, U>[];
 
-    constructor(private options: FunctionRouterOptions) {
+    constructor(private options: FunctionRouterOptions<T, U> = {}) {
         this.routes = [];
     }
 
@@ -79,6 +81,10 @@ export class FunctionRouter<T, U extends RequestContext> {
      * Calls the appropriate Handler based on the HTTP method and path found in the
      * requestContext.  Returns the result of the handler execution.
      *
+     * If the handler throws an error, by default, it is logged and an error response
+     * is sent based on the appropriate HTTP status code.  If a customErrorHandler has
+     * been provided, it will be called with the route and error.
+     *
      * @param requestContext
      * @returns handler result
      */
@@ -91,7 +97,19 @@ export class FunctionRouter<T, U extends RequestContext> {
         };
 
         if (route) {
-            response = await route.handle(requestContext);
+            try {
+                response = await route.handle(requestContext);
+            } catch (e) {
+                if (this.options.customErrorHandler) {
+                    return this.options.customErrorHandler(route, e);
+                } else {
+                    if (e instanceof ApiError) {
+                        return route.errorResponse((e as ApiError).statusCode);
+                    }
+
+                    return route.errorResponse(StatusCodes.INTERNAL_SERVER_ERROR);
+                }
+            }
         }
 
         response.headers = response.headers || {};

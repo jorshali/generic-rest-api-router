@@ -1,6 +1,6 @@
 {
   "name": "generic-rest-api-router",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "main": "./dist/index.js",
   "repository": "https://github.com/jorshali/generic-rest-api-router",
   "homepage": "https://github.com/jorshali/generic-rest-api-router",
@@ -16,7 +16,14 @@
   "bugs": {
     "url": "https://github.com/jorshali/generic-rest-api-router/issues"
   },
-  "files": ["package.json", "package-lock.json", "LICENSE", "README.md", "tsconfig.json", "dist"],
+  "files": [
+    "package.json",
+    "package-lock.json",
+    "LICENSE",
+    "README.md",
+    "tsconfig.json",
+    "dist"
+  ],
   "scripts": {
     "clean": "rm -rf ./dist",
     "prebuild": "npm run clean",

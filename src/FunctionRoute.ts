@@ -12,20 +12,27 @@ import { RequestContext } from './RequestContext';
  * requests, a route can contain path parameters.  The following examples are
  * routes with and without path parameters:
  *
- *   new FunctionRoute('GET', '/posts/:id', handler)
- *   new FunctionRoute('GET', '/posts', handler)
- *   new FunctionRoute('POST', '/posts', handler)
- *   new FunctionRoute('PUT', '/posts/:id', handler)
- *   new FunctionRoute('GET', '/posts/slug/:slug', handler)
+ *   new FunctionRoute('GET', '/posts', '/:id', handler)
+ *   new FunctionRoute('GET', '/posts', '', handler)
+ *   new FunctionRoute('POST', '/posts', '', handler)
+ *   new FunctionRoute('PUT', '/posts', '/:id', handler)
+ *   new FunctionRoute('GET', '/posts', '/slug/:slug', handler)
  *
  */
 export class FunctionRoute<T, U extends RequestContext> {
     constructor(
         private httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE',
-        private resourcePath: string,
-        private routePath: string,
+        private resourcePath: string = '',
+        private routePath: string = '/',
         private handler: Handler<T, U>,
-    ) {}
+    ) {
+        if (resourcePath.charAt(resourcePath.length - 1) === '/') {
+            throw new Error(
+                'The resourcePath should not include a trailing slash.  If the path to the resource is ' +
+                    'just /, simply leave out the resourcePath and include the / in the routePath.',
+            );
+        }
+    }
 
     /**
      * Determines whether the provided requestContext matches the HTTP method and
@@ -89,7 +96,7 @@ export class FunctionRoute<T, U extends RequestContext> {
      * @param result
      * @returns a 200 OK FunctionResponse instance with the result as the JSON body
      */
-    okResponse(result?: T | T[]): FunctionResponse {
+    okResponse(result?: T | T[] | any): FunctionResponse {
         return {
             statusCode: StatusCodes.OK,
             body: result ? JSON.stringify(result) : '',
@@ -106,34 +113,26 @@ export class FunctionRoute<T, U extends RequestContext> {
     errorResponse(statusCode: StatusCodes): FunctionResponse {
         return {
             statusCode,
-            body: getReasonPhrase(statusCode),
+            body: JSON.stringify({
+                message: getReasonPhrase(statusCode),
+            }),
         };
     }
 
     /**
-     * Calls on the handler provided to the constructor.  If the handler throws an error
-     * it is logged and an error response is sent based on the appropriate HTTP status code.
+     * Calls on the handler provided to the constructor and returns the response.  If response is empty,
+     * simply returns HTTP status OK.
      *
      * @param requestContext
      * @returns FunctionResponse based on the result of the handler
      */
     async handle(requestContext: U): Promise<FunctionResponse> {
-        try {
-            return (await this.handler(this, requestContext)) || this.okResponse();
-        } catch (e) {
-            console.error(e);
-
-            if (e instanceof ApiError) {
-                return this.errorResponse((e as ApiError).statusCode);
-            }
-
-            return this.errorResponse(StatusCodes.INTERNAL_SERVER_ERROR);
-        }
+        return (await this.handler(this, requestContext)) || this.okResponse();
     }
 
     private calculateUriOnlyPath(requestContext: U) {
         const path = requestContext.getPath();
-        const uriStartingIndex = path.indexOf(this.resourcePath);
+        const uriStartingIndex = path.indexOf(this.resourcePath) || 0;
 
         return path.slice(uriStartingIndex, path.length);
     }
